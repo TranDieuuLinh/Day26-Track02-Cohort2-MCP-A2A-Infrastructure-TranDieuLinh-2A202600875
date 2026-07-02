@@ -103,7 +103,7 @@ class GovernanceGuard:
                 self._log(pii_decision, "mcp_tool_call", sql, trace_id)
                 return pii_decision
 
-        if tool_name == "summarize_text":
+        if tool_name in ("summarize_text", "count_words"):
             text = str(arguments.get("text", ""))
             max_chars = int(tool_policy.get("max_input_chars", 10000))
             if len(text) > max_chars:

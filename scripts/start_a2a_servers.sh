@@ -38,15 +38,27 @@ done
 
 echo ""
 echo "Kiểm tra agent card:"
-curl -sf http://localhost:8001/.well-known/agent-card.json | head -c 120 && echo " ... (search OK)" || {
+# head -c cắt theo byte — dễ làm hỏng UTF-8 trong JSON (mô tả tiếng Việt)
+preview_card() {
+  local label="$1"
+  LABEL="$label" python3 -c "
+import os, sys
+data = sys.stdin.buffer.read().decode('utf-8', errors='replace')
+if not data.strip():
+    sys.exit(1)
+preview = data[:120] + (' ...' if len(data) > 120 else '')
+print(preview, f\"({os.environ['LABEL']})\")
+"
+}
+curl -sf http://localhost:8001/.well-known/agent-card.json | preview_card "search OK" || {
   echo "✗ search_agent chưa sẵn sàng — xem logs/search_agent.log"
   tail -5 logs/search_agent.log 2>/dev/null || true
 }
-curl -sf http://localhost:8002/.well-known/agent-card.json | head -c 120 && echo " ... (database OK)" || {
+curl -sf http://localhost:8002/.well-known/agent-card.json | preview_card "database OK" || {
   echo "✗ database_agent chưa sẵn sàng — xem logs/database_agent.log"
   tail -5 logs/database_agent.log 2>/dev/null || true
 }
-curl -sf http://localhost:8003/.well-known/agent-card.json | head -c 120 && echo " ... (synthesis OK)" || {
+curl -sf http://localhost:8003/.well-known/agent-card.json | preview_card "synthesis OK" || {
   echo "✗ synthesis_agent chưa sẵn sàng — xem logs/synthesis_agent.log"
   tail -5 logs/synthesis_agent.log 2>/dev/null || true
 }
